@@ -62,10 +62,18 @@ jobs:
         
           gradle-version: '8.7'
           
-      - name: Set up Android SDK
+      - name: Verify hosted Android SDK
       
-        uses: android-actions/setup-android@v3
+        shell: bash
         
+        run: |
+        
+          set -euo pipefail
+          
+          test -n "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          
+          test -x "${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/platform-tools/adb"
+          
       - name: Validate Android source
       
         shell: bash
@@ -105,6 +113,10 @@ jobs:
 
 
 # Build-only: Google Play production submission remains confirmation-controlled.
+
+
+
+
 
 
 
