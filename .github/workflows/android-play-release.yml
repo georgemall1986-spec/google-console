@@ -1,0 +1,25 @@
+name: FileFlip Android Play release
+
+on:
+  workflow_dispatch:
+    inputs:
+      track:
+        description: Google Play track
+        required: true
+        default: internal
+        type: choice
+        options: [internal, alpha, beta, production]
+      production:
+        description: Request production publication; GitHub will require the production environment reviewer
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    uses: ./.github/workflows/reusable-android-play-release.yml
+    with:
+      package_name: com.hggaming.fileflip
+      track: ${{ inputs.track }}
+      production: ${{ inputs.production }}
+    secrets: inherit
