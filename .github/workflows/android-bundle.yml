@@ -42,6 +42,8 @@ jobs:
       
         uses: actions/checkout@v4
         
+
+
       - name: Set up Java 17
       
         uses: actions/setup-java@v4
@@ -54,6 +56,8 @@ jobs:
           
           cache: gradle
           
+
+
       - name: Set up Gradle 8.9
       
         uses: gradle/actions/setup-gradle@v4
@@ -62,6 +66,8 @@ jobs:
         
           gradle-version: '8.9'
           
+
+
       - name: Verify hosted Android SDK
       
         shell: bash
@@ -74,6 +80,8 @@ jobs:
           
           test -x "${ANDROID_HOME:-${ANDROID_SDK_ROOT}}/platform-tools/adb"
           
+
+
       - name: Validate Android source
       
         shell: bash
@@ -88,12 +96,48 @@ jobs:
           
           test -f android/app/src/main/AndroidManifest.xml
           
+
+
+      - name: Decode release keystore when configured
+      
+        if: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 != '' }}
+        
+        env:
+        
+          FILEFLIP_KEYSTORE_BASE64: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 }}
+          
+          FILEFLIP_KEYSTORE_PASSWORD: ${{ secrets.FILEFLIP_KEYSTORE_PASSWORD }}
+          
+          FILEFLIP_KEY_ALIAS: ${{ secrets.FILEFLIP_KEY_ALIAS }}
+          
+          FILEFLIP_KEY_PASSWORD: ${{ secrets.FILEFLIP_KEY_PASSWORD }}
+          
+        run: |
+        
+          set -euo pipefail
+          
+          printf '%s' "$FILEFLIP_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/fileflip-upload.jks"
+          
+          chmod 600 "$RUNNER_TEMP/fileflip-upload.jks"
+          
+          echo "FILEFLIP_KEYSTORE_PATH=$RUNNER_TEMP/fileflip-upload.jks" >> "$GITHUB_ENV"
+          
+          echo "FILEFLIP_KEYSTORE_PASSWORD=$FILEFLIP_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          
+          echo "FILEFLIP_KEY_ALIAS=$FILEFLIP_KEY_ALIAS" >> "$GITHUB_ENV"
+          
+          echo "FILEFLIP_KEY_PASSWORD=$FILEFLIP_KEY_PASSWORD" >> "$GITHUB_ENV"
+          
+
+
       - name: Build release bundle
       
         working-directory: android
         
         run: gradle bundleRelease --stacktrace
         
+
+
       - name: Upload release bundle
       
         if: success()
@@ -113,6 +157,21 @@ jobs:
 
 
 # Build-only: Google Play production submission remains confirmation-controlled.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
