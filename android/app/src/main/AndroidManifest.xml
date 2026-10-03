@@ -20,7 +20,7 @@
       
         <activity
           
-            android:name=".MainActivity"
+            android:name="com.fileflip.app.MainActivity"
           
             android:exported="true">
           
@@ -37,7 +37,6 @@
     </application>
   
 </manifest>
-
 
 
 
