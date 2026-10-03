@@ -6,6 +6,16 @@ plugins {
 
 
 
+def releaseKeystorePath = System.getenv('FILEFLIP_KEYSTORE_PATH')
+
+def releaseStorePassword = System.getenv('FILEFLIP_KEYSTORE_PASSWORD')
+
+def releaseKeyAlias = System.getenv('FILEFLIP_KEY_ALIAS')
+
+def releaseKeyPassword = System.getenv('FILEFLIP_KEY_PASSWORD')
+
+
+
 android {
     
     namespace 'com.hggaming.fileflip'
@@ -30,11 +40,39 @@ android {
     
 
     
+    signingConfigs {
+        
+        release {
+            
+            if (releaseKeystorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                
+                storeFile file(releaseKeystorePath)
+                
+                storePassword releaseStorePassword
+                
+                keyAlias releaseKeyAlias
+                
+                keyPassword releaseKeyPassword
+                
+            }
+            
+        }
+        
+    }
+    
+
+    
     buildTypes {
         
         release {
             
             minifyEnabled false
+            
+            if (releaseKeystorePath && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                
+                signingConfig signingConfigs.release
+                
+            }
             
         }
         
@@ -51,6 +89,20 @@ android {
     }
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
