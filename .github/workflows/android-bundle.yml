@@ -36,6 +36,16 @@ jobs:
     
     timeout-minutes: 30
     
+    env:
+    
+      FILEFLIP_KEYSTORE_BASE64: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 }}
+      
+      FILEFLIP_KEYSTORE_PASSWORD: ${{ secrets.FILEFLIP_KEYSTORE_PASSWORD }}
+      
+      FILEFLIP_KEY_ALIAS: ${{ secrets.FILEFLIP_KEY_ALIAS }}
+      
+      FILEFLIP_KEY_PASSWORD: ${{ secrets.FILEFLIP_KEY_PASSWORD }}
+      
     steps:
     
       - name: Check out source
@@ -100,18 +110,8 @@ jobs:
 
       - name: Decode release keystore when configured
       
-        if: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 != '' }}
+        if: env.FILEFLIP_KEYSTORE_BASE64 != ''
         
-        env:
-        
-          FILEFLIP_KEYSTORE_BASE64: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 }}
-          
-          FILEFLIP_KEYSTORE_PASSWORD: ${{ secrets.FILEFLIP_KEYSTORE_PASSWORD }}
-          
-          FILEFLIP_KEY_ALIAS: ${{ secrets.FILEFLIP_KEY_ALIAS }}
-          
-          FILEFLIP_KEY_PASSWORD: ${{ secrets.FILEFLIP_KEY_PASSWORD }}
-          
         run: |
         
           set -euo pipefail
@@ -121,12 +121,6 @@ jobs:
           chmod 600 "$RUNNER_TEMP/fileflip-upload.jks"
           
           echo "FILEFLIP_KEYSTORE_PATH=$RUNNER_TEMP/fileflip-upload.jks" >> "$GITHUB_ENV"
-          
-          echo "FILEFLIP_KEYSTORE_PASSWORD=$FILEFLIP_KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
-          
-          echo "FILEFLIP_KEY_ALIAS=$FILEFLIP_KEY_ALIAS" >> "$GITHUB_ENV"
-          
-          echo "FILEFLIP_KEY_PASSWORD=$FILEFLIP_KEY_PASSWORD" >> "$GITHUB_ENV"
           
 
 
@@ -157,9 +151,6 @@ jobs:
 
 
 # Build-only: Google Play production submission remains confirmation-controlled.
-
-
-
 
 
 
