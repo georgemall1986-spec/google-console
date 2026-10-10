@@ -20,13 +20,13 @@ on:
     secrets:
       PLAY_SERVICE_ACCOUNT_JSON:
         required: true
-      ANDROID_KEYSTORE_BASE64:
+      FILEFLIP_KEYSTORE_BASE64:
         required: true
-      ANDROID_KEYSTORE_PASSWORD:
+      FILEFLIP_KEYSTORE_PASSWORD:
         required: true
-      ANDROID_KEY_ALIAS:
+      FILEFLIP_KEY_ALIAS:
         required: true
-      ANDROID_KEY_PASSWORD:
+      FILEFLIP_KEY_PASSWORD:
         required: true
 
   workflow_dispatch:
@@ -97,35 +97,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -x android/gradlew ]]; then
+          if [[ -f android/settings.gradle ]]; then
             echo "dir=android" >> "$GITHUB_OUTPUT"
+            echo "gradle=gradle" >> "$GITHUB_OUTPUT"
+          elif [[ -x android/gradlew ]]; then
+            echo "dir=android" >> "$GITHUB_OUTPUT"
+            echo "gradle=./gradlew" >> "$GITHUB_OUTPUT"
+          elif [[ -f settings.gradle ]]; then
+            echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "gradle=gradle" >> "$GITHUB_OUTPUT"
           elif [[ -x gradlew ]]; then
             echo "dir=." >> "$GITHUB_OUTPUT"
+            echo "gradle=./gradlew" >> "$GITHUB_OUTPUT"
           else
-            echo 'No executable gradlew found. Add a native Android project or run Expo prebuild before using this workflow.' >&2
+            echo "No Android Gradle project found." >&2
             exit 1
           fi
-
       - name: Decode signing keystore
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_BASE64: ${{ secrets.FILEFLIP_KEYSTORE_BASE64 }}
+        working-directory: ${{ steps.android.outputs.dir }}
+        shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "${{ steps.android.outputs.dir }}/release.keystore"
-          test -s "${{ steps.android.outputs.dir }}/release.keystore"
-
+          normalized=$(printf "%s" "$KEYSTORE_BASE64" | tr -cd "A-Za-z0-9+/=")
+          printf "%s" "$normalized" | base64 --decode > release.keystore
+          test -s release.keystore
       - name: Run checks
         working-directory: ${{ steps.android.outputs.dir }}
-        run: ./gradlew check --stacktrace
-
+        env:
+          GRADLE: ${{ steps.android.outputs.gradle }}
+        run: $GRADLE check --stacktrace
       - name: Build signed release bundle
         working-directory: ${{ steps.android.outputs.dir }}
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          GRADLE: ${{ steps.android.outputs.gradle }}
+          KEYSTORE_PASSWORD: ${{ secrets.FILEFLIP_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.FILEFLIP_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.FILEFLIP_KEY_PASSWORD }}
         run: |
-          ./gradlew bundleRelease --stacktrace \
+          $GRADLE bundleRelease --stacktrace \
             -Pandroid.injected.signing.store.file="$PWD/release.keystore" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
@@ -184,3 +195,4 @@ jobs:
             echo "- Production approval: ${{ inputs.production && 'required and granted by GitHub environment' || 'not requested' }}"
           } >> "$GITHUB_STEP_SUMMARY"
 # secret-name correction
+# workflow configuration refreshed
